@@ -1,0 +1,647 @@
+@import 'tailwindcss';
+
+:root {
+  color: #0f172a;
+  background: #f8fafc;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding-bottom: 6rem;
+}
+
+.topbar {
+  align-items: center;
+  background: #0f172a;
+  color: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  padding: 1.25rem max(1.25rem, calc((100vw - 64rem) / 2));
+}
+
+.topbar h1,
+.page-heading h2,
+.card h3 {
+  margin: 0;
+}
+
+.topbar h1 {
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin: 0 0 0.3rem;
+  text-transform: uppercase;
+}
+
+.phase-label {
+  color: #99f6e4;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.theme-toggle {
+  background: transparent;
+  border: 1px solid #475569;
+  border-radius: 999px;
+  color: #e2e8f0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.5rem 0.7rem;
+}
+
+.theme-toggle:hover {
+  background: #1e293b;
+}
+
+.compatibility-notice {
+  background: #fef3c7;
+  border-bottom: 1px solid #f59e0b;
+  color: #78350f;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  padding: 0.75rem max(1.25rem, calc((100vw - 64rem) / 2));
+}
+
+.page-container {
+  margin: 0 auto;
+  max-width: 64rem;
+  padding: 2rem 1.25rem;
+}
+
+.page-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-heading {
+  align-items: flex-end;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.page-heading h2 {
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  letter-spacing: -0.04em;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  padding: 1.25rem;
+}
+
+.hero-card {
+  align-items: center;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: auto 1fr;
+}
+
+.hero-card .primary-button {
+  grid-column: 1 / -1;
+}
+
+.hero-icon,
+.empty-icon {
+  align-items: center;
+  background: #ccfbf1;
+  border-radius: 1rem;
+  color: #0f766e;
+  display: flex;
+  font-size: 2rem;
+  height: 4rem;
+  justify-content: center;
+  width: 4rem;
+}
+
+.empty-icon {
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 2.4rem;
+  margin: 0 auto 1rem;
+}
+
+.muted {
+  color: #64748b;
+  line-height: 1.55;
+  margin: 0.4rem 0 0;
+}
+
+.primary-button {
+  background: #0f766e;
+  border: 0;
+  border-radius: 0.75rem;
+  color: #fff;
+  font-weight: 700;
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+  transition: background 160ms ease;
+}
+
+.primary-button:hover {
+  background: #115e59;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.status-pill {
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.45rem 0.7rem;
+  white-space: nowrap;
+}
+
+.status-idle {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.status-conectado {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-conectando,
+.status-reconectando {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.settings-card,
+.switch-row,
+.info-grid,
+.step-card {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.switch-row {
+  gap: 0.75rem;
+  margin-left: 1rem;
+  white-space: nowrap;
+}
+
+.switch-row input {
+  accent-color: #0f766e;
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.info-grid,
+.metric-grid {
+  gap: 1rem;
+}
+
+.info-grid > *,
+.metric-grid > * {
+  flex: 1;
+}
+
+.info-item,
+.metric-card {
+  background: #f1f5f9;
+  border-radius: 0.9rem;
+  padding: 1rem;
+}
+
+.info-item {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.battery-indicator {
+  background: #f1f5f9;
+  border-radius: 0.9rem;
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+}
+
+.battery-low strong,
+.error-message {
+  color: #b91c1c;
+}
+
+.success-message {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.75rem;
+  color: #166534;
+  margin: 0;
+  padding: 0.8rem 1rem;
+}
+
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.75rem;
+  margin: 0;
+  padding: 0.8rem 1rem;
+}
+
+.emergency-button {
+  background: #b91c1c;
+  border: 3px solid #fecaca;
+  border-radius: 1rem;
+  box-shadow: 0 4px 0 #7f1d1d;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  min-height: 3.75rem;
+  padding: 0.85rem 1rem;
+  width: 100%;
+}
+
+.emergency-button:hover {
+  background: #991b1b;
+}
+
+.emergency-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.session-controls {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.control-row {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.control-row label {
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.control-row select,
+.control-row input[type='range'] {
+  accent-color: #0f766e;
+  width: 100%;
+}
+
+.control-row select {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.7rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.control-range strong {
+  color: #0f766e;
+  float: right;
+}
+
+.session-actions {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+}
+
+.secondary-button {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  color: #334155;
+  font-weight: 700;
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+}
+
+.secondary-button:hover {
+  background: #f8fafc;
+}
+
+.session-state-label {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.chart-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.chart-card {
+  min-width: 0;
+}
+
+.chart-heading {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.chart-heading h3 {
+  font-size: 1rem;
+}
+
+.live-chart {
+  min-height: 180px;
+  width: 100%;
+}
+
+.chart-toggle {
+  justify-self: start;
+}
+
+.history-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.history-card {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.history-card h3 {
+  font-size: 1rem;
+}
+
+.history-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.history-detail {
+  display: grid;
+  gap: 1rem;
+}
+
+.info-label,
+.progress-label {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.progress-label {
+  margin: 0;
+}
+
+.progress-track {
+  background: #e2e8f0;
+  border-radius: 999px;
+  height: 0.6rem;
+  margin: 0.8rem 0;
+  overflow: hidden;
+}
+
+.progress-track span {
+  background: #0f766e;
+  display: block;
+  height: 100%;
+}
+
+.calibration-intro {
+  margin-top: 0.7rem;
+}
+
+.step-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.step-card {
+  gap: 1rem;
+  justify-content: flex-start;
+}
+
+.step-number {
+  align-items: center;
+  background: #f0fdfa;
+  border-radius: 0.75rem;
+  color: #0f766e;
+  display: flex;
+  flex: 0 0 2.5rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  height: 2.5rem;
+  justify-content: center;
+}
+
+.step-card > div {
+  flex: 1;
+}
+
+.step-state {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.step-button {
+  flex: 0 0 auto;
+}
+
+.step-confirmation {
+  color: #0f766e;
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+
+.empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.empty-state .muted {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 34rem;
+}
+
+.metric-grid {
+  display: flex;
+}
+
+.metric-card {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.metric-card strong {
+  font-size: 1.5rem;
+}
+
+.bottom-nav {
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid #e2e8f0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  left: 0;
+  padding: 0.5rem max(0.75rem, calc((100vw - 64rem) / 2));
+  position: fixed;
+  right: 0;
+  z-index: 10;
+}
+
+.nav-link {
+  border-radius: 0.7rem;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.8rem 0.25rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+.nav-link-active {
+  background: #f0fdfa;
+  color: #0f766e;
+}
+
+@media (min-width: 640px) {
+  .hero-card .primary-button {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-card,
+  .info-grid,
+  .metric-grid {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .switch-row {
+    justify-content: space-between;
+    margin-left: 0;
+    margin-top: 1rem;
+  }
+
+  .step-card {
+    align-items: flex-start;
+  }
+
+  .step-state {
+    display: none;
+  }
+
+  .history-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .history-actions {
+    width: 100%;
+  }
+
+  .history-actions .secondary-button {
+    flex: 1;
+  }
+
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root[data-theme='dark'] {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+:root[data-theme='dark'] .card {
+  background: #111827;
+  border-color: #334155;
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .muted,
+:root[data-theme='dark'] .info-label,
+:root[data-theme='dark'] .progress-label,
+:root[data-theme='dark'] .session-state-label {
+  color: #94a3b8;
+}
+
+:root[data-theme='dark'] .info-item,
+:root[data-theme='dark'] .metric-card,
+:root[data-theme='dark'] .battery-indicator,
+:root[data-theme='dark'] .bottom-nav {
+  background: #1e293b;
+}
+
+:root[data-theme='dark'] .bottom-nav {
+  border-color: #334155;
+}
+
+:root[data-theme='dark'] .nav-link {
+  color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .nav-link-active,
+:root[data-theme='dark'] .step-number {
+  background: #134e4a;
+  color: #99f6e4;
+}
+
+:root[data-theme='dark'] .secondary-button,
+:root[data-theme='dark'] .control-row select {
+  background: #1e293b;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+:root[data-theme='dark'] .status-idle {
+  background: #334155;
+  color: #cbd5e1;
+}
