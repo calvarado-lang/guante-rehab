@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { exportSessionCsv, listSessions } from '../db/sessions'
 import type { SessionRecord } from '../db/schema'
+import { isRemoteApiConfigured, listRemoteSessions } from '../api/sessions'
 
 function formatDuration(durationMs: number): string {
   const seconds = Math.round(durationMs / 1000)
@@ -24,12 +25,27 @@ export function Historial() {
 
   useEffect(() => {
     let isMounted = true
-    void listSessions().then((records) => {
+    void (async () => {
+      const localRecords = await listSessions()
+      let records = localRecords
+
+      if (isRemoteApiConfigured()) {
+        try {
+          const remoteRecords = await listRemoteSessions()
+          const merged = new Map<string, SessionRecord>()
+          remoteRecords.forEach((record) => merged.set(`${record.startedAt}-${record.endedAt}`, record))
+          localRecords.forEach((record) => merged.set(`${record.startedAt}-${record.endedAt}`, record))
+          records = Array.from(merged.values()).sort((a, b) => b.startedAt - a.startedAt)
+        } catch {
+          // El historial local permanece disponible si la API no responde.
+        }
+      }
+
       if (isMounted) {
         setSessions(records)
         setLoading(false)
       }
-    })
+    })()
     return () => {
       isMounted = false
     }
@@ -39,7 +55,7 @@ export function Historial() {
     <section className="page-stack">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Datos locales</p>
+          <p className="eyebrow">{isRemoteApiConfigured() ? 'Datos locales y nube' : 'Datos locales'}</p>
           <h2>Historial</h2>
         </div>
         <span className="status-pill status-idle">{sessions.length} sesiones</span>

@@ -34,7 +34,6 @@ export function Conectar() {
       </div>
 
       <article className="card hero-card">
-        <div className="hero-icon" aria-hidden="true">✋</div>
         <div>
           <h3>Prepara tu sesión</h3>
           <p className="muted">

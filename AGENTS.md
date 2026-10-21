@@ -1,201 +1,101 @@
-# AGENTS.md — PWA del Guante Robótico de Rehabilitación Adaptativa
+# Guante Rehab — registro técnico actualizado
 
-Instrucciones para el agente de código (Codex) que construirá la PWA. Lee este archivo completo antes de escribir código y trabaja **por fases**, en el orden indicado. Al terminar cada fase, verifica sus criterios de aceptación antes de pasar a la siguiente.
+Fecha de actualización: 2026-10-21
 
-## 1. Contexto del proyecto
+## Estado del proyecto
 
-Proyecto de titulación (UABC, Facultad de Ingeniería): *"Diseño e implementación de un guante robótico con asistencia adaptativa para la rehabilitación de mano"*. Es un exoesqueleto de mano impreso en 3D, con motores DC + tendones, sensores flex por dedo, EMG, FSR y potenciómetros.
+La aplicación es una PWA Vite + React + TypeScript. El frontend funciona sin
+backend y conserva el historial localmente con Dexie/IndexedDB.
 
-El sistema adapta la asistencia al esfuerzo del usuario: más asistencia cuando el esfuerzo (EMG) es bajo, más exigencia cuando es alto.
+## Trabajo realizado
 
-**Esta PWA es la interfaz** (configurar sesión, calibrar, ver datos en vivo, guardar historial). **No contiene el control adaptativo**: ese lazo vive en el firmware (ESP32-S3). La app nunca es la única protección de seguridad.
+- Se creó `api/` con un backend FastAPI.
+- Se agregaron los endpoints:
+  - `GET /api/health`
+  - `POST /api/sessions`
+  - `GET /api/sessions`
+  - `GET /api/sessions/{id}`
+- Se agregó el esquema PostgreSQL en `api/app/schema.sql`.
+- Las estadísticas y muestras de cada sesión se guardan como `JSONB` en Neon.
+- Se agregó validación para modo `0-4`, asistencia `0-100` y arreglos de cinco
+  valores para flexión y rango de movimiento.
+- Se agregó CORS configurable mediante `FRONTEND_ORIGINS`.
+- Se agregó `X-Device-Id` para separar el historial anónimo de cada instalación.
+- Se integró la PWA con la API mediante `src/api/sessions.ts`.
+- Al terminar una sesión, primero se guarda localmente y después se intenta
+  sincronizar con la API. Si la API no está disponible, la copia local sigue
+  funcionando.
+- El historial combina registros locales y remotos sin duplicarlos por fecha
+  de inicio y fin.
+- Se agregaron ejemplos de variables de entorno en `.env.example` y
+  `api/.env.example`.
+- Se agregó `render.yaml` con los dos servicios de Render y la regla rewrite
+  para las rutas de React.
+- Se documentó el despliegue separado de Static Site y Web Service en Render.
 
-### Hardware (para entender los datos)
+## Variables de entorno
 
-- Nodo A (ESP32-S3-Zero): sensores (flex ×5, EMG, FSR).
-- Nodo B (ESP32-S3-Zero): motores (3× TB6612FNG, 5 motores DC N20) y control.
-- Nodo C (ESP32-C3 mini): lee encoders A/B de los 5 motores y manda conteos por UART al Nodo B.
-- Nodos A y B se comunican por UART cableado. Batería LiPo 2S con monitor por divisor resistivo a ADC.
-- **Qué nodo expone BLE al celular está por confirmar.** La app no debe depender de eso: usa la capa de abstracción de la sección 5 y se configura con los UUID de `gattSpec.ts`.
+Frontend:
 
-## 2. Stack (obligatorio)
-
-- Vite + React 18+ + **TypeScript en modo estricto**
-- `vite-plugin-pwa` (manifest, service worker, instalable)
-- Zustand para estado
-- Dexie (IndexedDB) para datos locales
-- uPlot para gráficas en vivo
-- UI: Tailwind CSS + componentes propios simples (sin librerías pesadas)
-- Vitest para pruebas unitarias
-- ESLint + Prettier
-- Web Bluetooth API nativa (`@types/web-bluetooth`), **sin librerías BLE de terceros**
-
-**Idioma:** toda la interfaz, mensajes y comentarios en **español**. Nombres de código en inglés.
-
-## 3. Limitaciones de plataforma (respétalas)
-
-- Web Bluetooth solo funciona en Chrome/Edge (Android, Windows, macOS, Linux). **No funciona en iOS.** Muestra un aviso claro si `navigator.bluetooth` no existe.
-- Requiere HTTPS (o `localhost` en desarrollo).
-- `navigator.bluetooth.requestDevice()` solo puede llamarse desde un gesto del usuario (clic). Nunca al cargar la página.
-- Web Bluetooth **no permite pedir el MTU**: el navegador lo negocia solo. Por eso cada paquete de notificación se diseña para caber en **≤ 20 bytes**.
-- Si la pestaña pasa a segundo plano o se bloquea la pantalla, la conexión puede cortarse: maneja la reconexión y muestra el estado.
-
-## 4. Estructura de carpetas
-
-```
-src/
-  ble/
-    gattSpec.ts        → UUIDs, opcodes y constantes del protocolo (única fuente de verdad)
-    types.ts           → interfaz GloveTransport y tipos de paquetes
-    parsers.ts         → DataView → objetos tipados (y encoders de comandos)
-    webBluetoothClient.ts
-    mockClient.ts      → simulador sin hardware (ver sección 6)
-    reconnect.ts
-  store/
-    deviceStore.ts     → conexión, estado, batería, errores
-    sessionStore.ts    → sesión activa, ejercicio, parámetros
-    telemetryBuffer.ts → buffer circular FUERA de React
-  db/
-    schema.ts          → Dexie
-    sessions.ts
-  pages/
-    Conectar.tsx
-    Calibracion.tsx
-    Sesion.tsx
-    Historial.tsx
-  components/
-    LiveChart.tsx      → uPlot
-    EmergencyStop.tsx  → siempre visible
-    ConnectionBadge.tsx
-    BatteryIndicator.tsx
-  App.tsx
-  main.tsx
-tests/
-  parsers.test.ts
+```env
+VITE_USE_MOCK=true
+VITE_API_URL=https://tu-api.onrender.com
 ```
 
-## 5. Protocolo BLE (propuesta v1 — editable solo en `gattSpec.ts`)
+Backend:
 
-Todos los enteros son **little-endian**. Los UUID de abajo son **marcadores de posición**; deben coincidir con el firmware. Cámbialos solo en `gattSpec.ts`.
-
-Servicio: `6e400001-b5a3-f393-e0a9-e50e24dcca9e`
-
-| Característica | UUID | Propiedades | Contenido |
-|---|---|---|---|
-| `telemetry_sensors` | `...0002...` | Notify | 18 bytes (ver abajo) |
-| `telemetry_motors` | `...0003...` | Notify | 20 bytes (ver abajo) |
-| `status` | `...0004...` | Notify, Read | estado y errores |
-| `command` | `...0005...` | Write (sin respuesta) | comandos |
-| `config` | `...0006...` | Read, Write | calibración |
-
-### `telemetry_sensors` (18 bytes, ~20-50 Hz)
-
-| Offset | Tipo | Campo |
-|---|---|---|
-| 0 | u16 | `seq` (contador, para detectar pérdidas) |
-| 2 | u16 ×5 | `flex[0..4]` (pulgar→meñique, ADC crudo) |
-| 12 | u16 | `emgEnvelope` |
-| 14 | u16 | `fsr` |
-| 16 | u8 | `state` (enum de máquina de estados) |
-| 17 | u8 | `batteryPct` (0-100) |
-
-### `telemetry_motors` (20 bytes, ~20 Hz)
-
-| Offset | Tipo | Campo |
-|---|---|---|
-| 0 | i32 ×5 | `encoderCounts[0..4]` |
-
-### `status` (4 bytes)
-
-| Offset | Tipo | Campo |
-|---|---|---|
-| 0 | u8 | `state` |
-| 1 | u8 | `errorCode` (0 = sin error) |
-| 2 | u16 | `flags` (bit0: calibrado, bit1: EMG ok, bit2: motores habilitados, bit3: batería baja) |
-
-### `command` (opcode u8 + payload)
-
-| Opcode | Nombre | Payload |
-|---|---|---|
-| 0x01 | `SET_MODE` | u8 modo (0 idle, 1 calibrar, 2 pasivo, 3 asistido, 4 adaptativo) |
-| 0x02 | `SET_ASSIST_LEVEL` | u8 (0-100) |
-| 0x03 | `START` | — |
-| 0x04 | `STOP` | — |
-| 0x05 | `ESTOP` | — |
-| 0x06 | `CAL_EMG_BASELINE` | — |
-| 0x07 | `CAL_EMG_MVC` | — |
-| 0x08 | `CAL_FLEX_OPEN` | — |
-| 0x09 | `CAL_FLEX_CLOSED` | — |
-| 0x0A | `HEARTBEAT` | u8 contador |
-
-### Reglas de seguridad del protocolo (la app debe cumplirlas)
-
-1. Envía `HEARTBEAT` cada **500 ms** mientras haya sesión activa. El firmware debe pasar a estado seguro si lo pierde.
-2. El botón **Paro de emergencia** envía `ESTOP` de inmediato, está visible en toda pantalla de sesión y nunca se deshabilita.
-3. Si la conexión se cae, la app muestra una alerta clara y **no asume** que el guante se detuvo: indica que el firmware debe entrar solo en estado seguro.
-4. La app nunca envía niveles de asistencia fuera de 0-100 ni inicia sesiones sin calibración completa.
-
-## 6. Modo simulador (clave para avanzar sin hardware)
-
-Implementa `GloveTransport` como interfaz y dos implementaciones: `WebBluetoothClient` y `MockClient`.
-
-```ts
-interface GloveTransport {
-  connect(): Promise<void>;
-  disconnect(): Promise<void>;
-  onSensors(cb: (p: SensorPacket) => void): () => void;
-  onMotors(cb: (p: MotorPacket) => void): () => void;
-  onStatus(cb: (s: StatusPacket) => void): () => void;
-  onDisconnected(cb: () => void): () => void;
-  sendCommand(cmd: Command): Promise<void>;
-}
+```env
+DATABASE_URL=postgresql://...neon.tech...?...sslmode=require
+FRONTEND_ORIGINS=https://tu-pwa.onrender.com
 ```
 
-`MockClient` genera datos plausibles: flex que oscila suavemente, EMG con ráfagas, FSR con picos, encoders que cambian según el modo, batería que baja lento, y responde a comandos (`START`, `STOP`, `ESTOP`) cambiando el estado. Se elige con la variable `VITE_USE_MOCK=true` y con un interruptor visible en la pantalla Conectar.
+`DATABASE_URL` solo debe existir en el backend. Nunca debe comenzar con
+`VITE_` ni enviarse al navegador.
 
-## 7. Reglas de rendimiento y código
+## Ejecución local
 
-- **No guardes la telemetría de 20-50 Hz en el estado de React.** Usa `telemetryBuffer.ts` (buffer circular de tamaño fijo, fuera de React) y dibuja con uPlot a ~30 fps con `requestAnimationFrame`. React solo guarda estado de baja frecuencia (conexión, modo, batería, errores).
-- Detecta paquetes perdidos con `seq` y cuéntalos en el store.
-- Todo el parseo binario pasa por `parsers.ts` y tiene pruebas unitarias (valores límite, little-endian, longitudes incorrectas).
-- Maneja `gattserverdisconnected` con reconexión (backoff, máximo 5 intentos) y estados visibles: `desconectado`, `conectando`, `conectado`, `reconectando`, `error`.
-- Sin `any`. Sin dependencias innecesarias. Componentes pequeños.
+Frontend:
 
-## 8. Fases de trabajo
+```bash
+npm install
+npm run dev
+```
 
-### Fase 1 — Base y PWA
-Crear el proyecto Vite + React + TS, Tailwind, ESLint/Prettier, `vite-plugin-pwa` con manifest (nombre "Guante Rehab", íconos placeholder, `display: standalone`). Navegación entre las 4 pantallas (puede ser react-router).
-**Aceptación:** `npm run build` pasa; la app es instalable; hay aviso si no existe Web Bluetooth.
+Backend, desde `api/`:
 
-### Fase 2 — Protocolo y simulador
-`gattSpec.ts`, `types.ts`, `parsers.ts` (+ pruebas Vitest), `MockClient`, `telemetryBuffer.ts`, `deviceStore`.
-**Aceptación:** `npm test` pasa; el mock emite paquetes y el store refleja conexión/estado.
+```bash
+python -m venv .venv
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
 
-### Fase 3 — Pantalla Conectar y cliente real
-`WebBluetoothClient` con `requestDevice` (filtro por UUID de servicio), notificaciones, escritura de comandos y reconexión. Pantalla Conectar con interruptor mock/real, badge de conexión y batería.
-**Aceptación:** con el mock funciona completo; con hardware real se conecta y recibe notificaciones (se puede probar con una app como nRF Connect simulando el servicio).
+Para conectar ambos localmente, usa `VITE_API_URL=http://localhost:8000` y
+configura `DATABASE_URL` con la conexión de desarrollo de Neon.
 
-### Fase 4 — Pantalla Sesión
-Gráficas en vivo (5 flex, EMG, FSR; encoders en vista secundaria), selector de modo, deslizador de nivel de asistencia (0-100), Start/Stop, **paro de emergencia siempre visible**, heartbeat de 500 ms, alerta de desconexión.
-**Aceptación:** 30 fps estables con el mock a 50 Hz; el ESTOP envía el comando y pone la UI en estado de paro; sin re-renders de React por cada paquete.
+## Despliegue en Render
 
-### Fase 5 — Calibración
-Flujo guiado paso a paso: EMG baseline (mano relajada), EMG MVC (contracción máxima), flex abierto y flex cerrado. Cada paso envía su comando, muestra progreso y confirma por `status.flags`. Bloquea el inicio de sesión si la calibración está incompleta.
-**Aceptación:** el flujo completo funciona con el mock y los pasos se pueden repetir.
+Static Site:
 
-### Fase 6 — Historial local
-Guardar sesiones en Dexie: fecha, duración, modo, nivel de asistencia, estadísticas (EMG promedio/máximo, rango de movimiento por dedo, paquetes perdidos) y una serie submuestreada para graficar. Pantalla Historial con lista, detalle y gráfica; exportar sesión a CSV.
-**Aceptación:** las sesiones persisten al recargar y se exportan correctamente.
+```text
+Build: npm ci && npm run build
+Publish directory: dist
+```
 
-### Fase 7 — Pulido
-Estados vacíos, errores legibles, accesibilidad (contraste, botones grandes para uso con pacientes), modo claro/oscuro, README con instrucciones de ejecución y de conexión con el firmware.
+Web Service:
 
-### Fuera de alcance por ahora
-Sincronización con backend (FastAPI/Neon), cuentas de usuario, soporte iOS y app nativa. Deja la capa `db/sessions.ts` limpia para poder agregar sincronización después.
+```text
+Root directory: api
+Build: pip install -r requirements.txt
+Start: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
 
-## 9. Reglas de trabajo para el agente
+En el Static Site agrega la regla rewrite `/*` → `/index.html` para las rutas
+de React. En el Web Service agrega `DATABASE_URL` y `FRONTEND_ORIGINS`; en el
+Static Site agrega `VITE_API_URL`.
 
-- Haz commits pequeños por fase con mensajes claros en español.
-- No cambies el protocolo fuera de `gattSpec.ts` y `parsers.ts`; si algo del protocolo debe cambiar, documenta el cambio en el README.
-- Si una decisión depende del hardware o del firmware (qué nodo expone BLE, UUID reales, frecuencias), **no la inventes**: usa el valor propuesto aquí, déjalo configurable y anótalo en una sección "Pendientes con firmware" del README.
-- Antes de terminar cada fase, ejecuta `npm run lint`, `npm test` y `npm run build`.
+## Seguridad y alcance
+
+El identificador de dispositivo no es autenticación. Antes de usar datos de
+pacientes o realizar una prueba clínica se deben agregar cuentas, autenticación,
+autorización, auditoría y protección de datos. El backend actual es una base
+funcional para desarrollo y demostración.

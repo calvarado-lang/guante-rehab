@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+!api/.env.example
+api/.venv/
+api/.env
+api/__pycache__/
+api/**/__pycache__/
+*.pyc
+.neon

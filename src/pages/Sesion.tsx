@@ -7,6 +7,7 @@ import { useSessionStore } from '../store/sessionStore'
 import { useEffect, useState } from 'react'
 import { saveSession } from '../db/sessions'
 import { telemetryBuffer } from '../store/telemetryBuffer'
+import { isRemoteApiConfigured, saveRemoteSession } from '../api/sessions'
 
 const modes: Array<{ value: Mode; label: string }> = [
   { value: 0, label: 'Reposo' },
@@ -106,7 +107,7 @@ export function Sesion() {
           flexMaximums[index] = Math.max(flexMaximums[index], value)
         })
       }
-      await saveSession({
+      const completedSession = {
         startedAt: currentSession.startedAt,
         endedAt,
         durationMs: Math.max(0, endedAt - currentSession.startedAt),
@@ -123,8 +124,19 @@ export function Sesion() {
           lostPackets,
         },
         samples,
-      })
-      setSavedMessage('Sesión guardada localmente.')
+      }
+      await saveSession(completedSession)
+
+      if (isRemoteApiConfigured()) {
+        try {
+          await saveRemoteSession(completedSession)
+          setSavedMessage('Sesión guardada localmente y sincronizada con la nube.')
+        } catch {
+          setSavedMessage('Sesión guardada localmente. No fue posible sincronizarla con la nube.')
+        }
+      } else {
+        setSavedMessage('Sesión guardada localmente.')
+      }
     }
   }
 
