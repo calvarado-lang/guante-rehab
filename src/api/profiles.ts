@@ -45,6 +45,13 @@ export async function getRemoteRecommendation(profileId: string): Promise<Routin
   return (await parseResponse(response)) as RoutineRecommendation
 }
 
+export async function listRemoteRoutines(profileId: string): Promise<RoutineRecord[]> {
+  const response = await fetch(apiUrl(`/api/profiles/${profileId}/routines`), {
+    headers: requestHeaders(),
+  })
+  return (await parseResponse(response)) as RoutineRecord[]
+}
+
 export async function saveRemoteRoutine(
   profileId: string,
   routine: Omit<RoutineRecord, 'profileId' | 'createdAt'>,

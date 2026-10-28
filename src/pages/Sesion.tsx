@@ -6,7 +6,8 @@ import { getActiveTransport, useDeviceStore } from '../store/deviceStore'
 import { useSessionStore } from '../store/sessionStore'
 import { useEffect, useState } from 'react'
 import { saveSession } from '../db/sessions'
-import { getLatestCalibration } from '../db/profiles'
+import { getLatestCalibration, listRoutines } from '../db/profiles'
+import type { RoutineRecord } from '../db/schema'
 import { telemetryBuffer } from '../store/telemetryBuffer'
 import { isRemoteApiConfigured, saveRemoteSession } from '../api/sessions'
 import { useProfileStore } from '../store/profileStore'
@@ -47,6 +48,7 @@ export function Sesion() {
   const profileId = useProfileStore((state) => state.selectedProfileId)
   const [showEncoders, setShowEncoders] = useState(false)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
+  const [activeRoutine, setActiveRoutine] = useState<RoutineRecord | null>(null)
 
   useEffect(() => {
     if (sessionStatus !== 'activa' || connectionState !== 'conectado') {
@@ -81,20 +83,31 @@ export function Sesion() {
       setError('Completa la calibración antes de iniciar una sesión.')
       return
     }
+    const currentRoutine = (await listRoutines(profileId))[0]
+    if (currentRoutine === undefined) {
+      setError('Abre Rutina para generar la rutina adaptada antes de iniciar la sesión.')
+      return
+    }
+    setActiveRoutine(currentRoutine)
     try {
-      await getActiveTransport()?.sendCommand({ type: 'SET_MODE', mode })
-      await getActiveTransport()?.sendCommand({ type: 'SET_ASSIST_LEVEL', level: assistLevel })
+      setMode(currentRoutine.mode)
+      setAssistLevel(currentRoutine.assistLevel)
+      await getActiveTransport()?.sendCommand({ type: 'SET_MODE', mode: currentRoutine.mode })
+      await getActiveTransport()?.sendCommand({ type: 'SET_ASSIST_LEVEL', level: currentRoutine.assistLevel })
       await getActiveTransport()?.sendCommand({ type: 'START' })
       start()
     } catch (error) {
+      setActiveRoutine(null)
       setError(error instanceof Error ? error.message : 'No fue posible iniciar la sesión.')
     }
   }
 
   const handleStop = async () => {
     const currentSession = useSessionStore.getState()
+    const routineForSession = activeRoutine
     await getActiveTransport()?.sendCommand({ type: 'STOP' })
     stop()
+    setActiveRoutine(null)
 
     if (currentSession.startedAt !== null) {
       const endedAt = Date.now()
@@ -122,6 +135,8 @@ export function Sesion() {
       const completedSession = {
         profileId: profileId ?? undefined,
         calibrationId: latestCalibration?.id,
+        routineId: routineForSession?.id,
+        exerciseName: routineForSession?.name,
         startedAt: currentSession.startedAt,
         endedAt,
         durationMs: Math.max(0, endedAt - currentSession.startedAt),
@@ -188,6 +203,12 @@ export function Sesion() {
 
       <EmergencyStop />
 
+      {activeRoutine !== null && (
+        <p className="success-message" role="status">
+          Rutina aplicada: asistencia {activeRoutine.assistLevel}% · {activeRoutine.repetitions} repeticiones.
+        </p>
+      )}
+
       {profileId === null && (
         <p className="error-message" role="alert">Selecciona un perfil en la sección Perfiles antes de iniciar una sesión.</p>
       )}
@@ -199,7 +220,7 @@ export function Sesion() {
             id="mode"
             value={mode}
             onChange={(event) => void handleModeChange(Number(event.target.value) as Mode)}
-            disabled={sessionStatus === 'emergencia'}
+            disabled={sessionStatus === 'emergencia' || activeRoutine !== null}
           >
             {modes.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
@@ -213,7 +234,7 @@ export function Sesion() {
             max="100"
             value={assistLevel}
             onChange={(event) => void handleAssistChange(Number(event.target.value))}
-            disabled={sessionStatus === 'emergencia'}
+            disabled={sessionStatus === 'emergencia' || activeRoutine !== null}
           />
         </div>
         <div className="session-actions">
