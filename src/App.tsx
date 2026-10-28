@@ -4,13 +4,17 @@ import { useEffect, useState } from 'react'
 import { Calibracion } from './pages/Calibracion'
 import { Conectar } from './pages/Conectar'
 import { Historial } from './pages/Historial'
+import { Perfiles } from './pages/Perfiles'
+import { Rutina } from './pages/Rutina'
 import { Sesion } from './pages/Sesion'
 
 const navigation = [
+  { to: '/perfiles', label: 'Perfiles', end: false },
   { to: '/', label: 'Conectar', end: true },
   { to: '/calibracion', label: 'Calibración', end: false },
   { to: '/sesion', label: 'Sesión', end: false },
   { to: '/historial', label: 'Historial', end: false },
+  { to: '/rutina', label: 'Rutina', end: false },
 ]
 
 function App() {
@@ -31,15 +35,15 @@ function App() {
           <p className="eyebrow">Rehabilitación adaptativa</p>
           <h1>Guante Rehab</h1>
         </div>
-          <button
-            className="theme-toggle"
-            type="button"
-            onClick={() => setTheme((current) => current === 'light' ? 'dark' : 'light')}
-            aria-label={`Cambiar a modo ${theme === 'light' ? 'oscuro' : 'claro'}`}
-            aria-pressed={theme === 'dark'}
-          >
-            {theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
-          </button>
+        <button
+          className="theme-toggle"
+          type="button"
+          onClick={() => setTheme((current) => current === 'light' ? 'dark' : 'light')}
+          aria-label={`Cambiar a modo ${theme === 'light' ? 'oscuro' : 'claro'}`}
+          aria-pressed={theme === 'dark'}
+        >
+          {theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
+        </button>
       </header>
 
       {!isWebBluetoothAvailable() && (
@@ -51,10 +55,12 @@ function App() {
 
       <main className="page-container">
         <Routes>
+          <Route path="/perfiles" element={<Perfiles />} />
           <Route path="/" element={<Conectar />} />
           <Route path="/calibracion" element={<Calibracion />} />
           <Route path="/sesion" element={<Sesion />} />
           <Route path="/historial" element={<Historial />} />
+          <Route path="/rutina" element={<Rutina />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -65,9 +71,7 @@ function App() {
             key={item.to}
             to={item.to}
             end={item.end}
-            className={({ isActive }) =>
-              isActive ? 'nav-link nav-link-active' : 'nav-link'
-            }
+            className={({ isActive }) => isActive ? 'nav-link nav-link-active' : 'nav-link'}
           >
             {item.label}
           </NavLink>

@@ -29,6 +29,13 @@ prioridad y no se necesita ningún archivo local.
 ## Endpoints
 
 - `GET /api/health`
+- `GET /api/profiles`
+- `POST /api/profiles`
+- `GET /api/profiles/{id}/calibrations`
+- `POST /api/profiles/{id}/calibrations`
+- `GET /api/profiles/{id}/routine-recommendation`
+- `GET /api/profiles/{id}/routines`
+- `POST /api/profiles/{id}/routines`
 - `POST /api/sessions`
 - `GET /api/sessions`
 - `GET /api/sessions/{id}`

@@ -242,6 +242,50 @@ button {
   width: 100%;
 }
 
+.form-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid label {
+  color: #334155;
+  display: grid;
+  font-size: 0.9rem;
+  font-weight: 700;
+  gap: 0.55rem;
+}
+
+.form-grid input {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.7rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.profile-form,
+.profile-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.profile-card {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.profile-card-active {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
+}
+
+.routine-range-grid {
+  margin-top: 1rem;
+}
+
 .connection-card code {
   background: #f1f5f9;
   border-radius: 0.35rem;
@@ -557,7 +601,7 @@ button {
   border-top: 1px solid #e2e8f0;
   bottom: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   left: 0;
   padding: 0.5rem max(0.75rem, calc((100vw - 64rem) / 2));
   position: fixed;
@@ -624,6 +668,10 @@ button {
   .chart-grid {
     grid-template-columns: 1fr;
   }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 :root[data-theme='dark'] {
@@ -667,7 +715,8 @@ button {
 
 :root[data-theme='dark'] .secondary-button,
 :root[data-theme='dark'] .control-row select,
-:root[data-theme='dark'] .connection-card input[type='text'] {
+:root[data-theme='dark'] .connection-card input[type='text'],
+:root[data-theme='dark'] .form-grid input {
   background: #1e293b;
   border-color: #475569;
   color: #e2e8f0;

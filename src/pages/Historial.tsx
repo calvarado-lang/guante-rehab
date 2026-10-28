@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { exportSessionCsv, listSessions } from '../db/sessions'
 import type { SessionRecord } from '../db/schema'
 import { isRemoteApiConfigured, listRemoteSessions } from '../api/sessions'
+import { useProfileStore } from '../store/profileStore'
 
 function formatDuration(durationMs: number): string {
   const seconds = Math.round(durationMs / 1000)
@@ -19,6 +20,7 @@ function downloadCsv(session: SessionRecord): void {
 }
 
 export function Historial() {
+  const selectedProfileId = useProfileStore((state) => state.selectedProfileId)
   const [sessions, setSessions] = useState<SessionRecord[]>([])
   const [selectedSession, setSelectedSession] = useState<SessionRecord | null>(null)
   const [loading, setLoading] = useState(true)
@@ -26,12 +28,12 @@ export function Historial() {
   useEffect(() => {
     let isMounted = true
     void (async () => {
-      const localRecords = await listSessions()
+      const localRecords = await listSessions(selectedProfileId)
       let records = localRecords
 
       if (isRemoteApiConfigured()) {
         try {
-          const remoteRecords = await listRemoteSessions()
+          const remoteRecords = await listRemoteSessions(selectedProfileId)
           const merged = new Map<string, SessionRecord>()
           remoteRecords.forEach((record) => merged.set(`${record.startedAt}-${record.endedAt}`, record))
           localRecords.forEach((record) => merged.set(`${record.startedAt}-${record.endedAt}`, record))
@@ -49,7 +51,7 @@ export function Historial() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [selectedProfileId])
 
   return (
     <section className="page-stack">

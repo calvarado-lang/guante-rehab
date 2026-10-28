@@ -47,6 +47,12 @@ npm run build
 La build genera el manifest y el service worker de la PWA. Los datos del
 historial se guardan localmente en IndexedDB mediante Dexie.
 
+La aplicación organiza el trabajo por perfil: cada perfil conserva su
+historial de calibraciones, sesiones de ejercicio y propuestas de rutina. La
+rutina se calcula como una referencia basada en las últimas calibraciones y
+requiere aprobación antes de ejecutarse; el frontend todavía no envía
+movimientos automáticos por dedo al firmware.
+
 ## Backend y Neon
 
 El backend opcional está en [`api/`](api/). Usa FastAPI y PostgreSQL para

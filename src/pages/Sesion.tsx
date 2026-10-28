@@ -6,8 +6,10 @@ import { getActiveTransport, useDeviceStore } from '../store/deviceStore'
 import { useSessionStore } from '../store/sessionStore'
 import { useEffect, useState } from 'react'
 import { saveSession } from '../db/sessions'
+import { getLatestCalibration } from '../db/profiles'
 import { telemetryBuffer } from '../store/telemetryBuffer'
 import { isRemoteApiConfigured, saveRemoteSession } from '../api/sessions'
+import { useProfileStore } from '../store/profileStore'
 
 const modes: Array<{ value: Mode; label: string }> = [
   { value: 0, label: 'Reposo' },
@@ -42,6 +44,7 @@ export function Sesion() {
   const stop = useSessionStore((state) => state.stop)
   const incrementHeartbeat = useSessionStore((state) => state.incrementHeartbeat)
   const setError = useSessionStore((state) => state.setError)
+  const profileId = useProfileStore((state) => state.selectedProfileId)
   const [showEncoders, setShowEncoders] = useState(false)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
 
@@ -62,6 +65,14 @@ export function Sesion() {
   }, [connectionState, incrementHeartbeat, sessionStatus])
 
   const handleStart = async () => {
+    if (profileId === null) {
+      setError('Selecciona un perfil antes de iniciar una sesión.')
+      return
+    }
+    if (await getLatestCalibration(profileId) === undefined) {
+      setError('Completa y guarda una calibración para el perfil antes de iniciar una sesión.')
+      return
+    }
     if (connectionState !== 'conectado') {
       setError('Conecta el guante antes de iniciar una sesión.')
       return
@@ -99,6 +110,7 @@ export function Sesion() {
           fsr: sensors.fsr,
         }))
       const emgValues = sensorPoints.map(({ sensors }) => sensors.emgEnvelope)
+      const latestCalibration = profileId === null ? undefined : await getLatestCalibration(profileId)
       const flexMinimums = [Infinity, Infinity, Infinity, Infinity, Infinity]
       const flexMaximums = [-Infinity, -Infinity, -Infinity, -Infinity, -Infinity]
       for (const { sensors } of sensorPoints) {
@@ -108,6 +120,8 @@ export function Sesion() {
         })
       }
       const completedSession = {
+        profileId: profileId ?? undefined,
+        calibrationId: latestCalibration?.id,
         startedAt: currentSession.startedAt,
         endedAt,
         durationMs: Math.max(0, endedAt - currentSession.startedAt),
@@ -173,6 +187,10 @@ export function Sesion() {
       {savedMessage !== null && <p className="success-message" role="status">{savedMessage}</p>}
 
       <EmergencyStop />
+
+      {profileId === null && (
+        <p className="error-message" role="alert">Selecciona un perfil en la sección Perfiles antes de iniciar una sesión.</p>
+      )}
 
       <article className="card session-controls">
         <div className="control-row">

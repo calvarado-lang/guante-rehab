@@ -4,8 +4,11 @@ export async function saveSession(session: SessionRecord): Promise<number> {
   return db.sessions.add(session)
 }
 
-export async function listSessions(): Promise<SessionRecord[]> {
-  return db.sessions.orderBy('startedAt').reverse().toArray()
+export async function listSessions(profileId?: string | null): Promise<SessionRecord[]> {
+  const sessions = await db.sessions.orderBy('startedAt').reverse().toArray()
+  return profileId === undefined || profileId === null
+    ? sessions
+    : sessions.filter((session) => session.profileId === profileId)
 }
 
 export async function getSession(id: number): Promise<SessionRecord | undefined> {
