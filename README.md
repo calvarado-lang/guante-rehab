@@ -8,8 +8,9 @@ ESP32-S3.
 ## Requisitos
 
 - Node.js 22 o superior.
-- Chrome o Edge para Web Bluetooth.
-- HTTPS en producción o `localhost` durante el desarrollo.
+- Un navegador moderno en el celular, tableta o computadora.
+- Chrome o Edge si se desea usar Bluetooth desde la PWA.
+- Wi-Fi y la PWA en la misma red para usar el transporte Wi-Fi.
 
 ## Ejecución local
 
@@ -24,9 +25,16 @@ Para trabajar sin hardware, crea un archivo `.env.local` con:
 VITE_USE_MOCK=true
 ```
 
-El interruptor visible en **Conectar** permite cambiar entre simulador y
-Bluetooth real. La llamada de selección del dispositivo solo ocurre al pulsar
-el botón de conexión, como exige Web Bluetooth.
+En **Conectar** se puede elegir simulador, Wi-Fi o Bluetooth. Para Wi-Fi,
+escribe la IP del Nodo B (por ejemplo `http://192.168.4.1` en modo punto de
+acceso). Para Bluetooth, la llamada de selección del dispositivo solo ocurre
+al pulsar el botón de conexión, como exige Web Bluetooth.
+
+La PWA puede abrirse en un celular o tableta desde el navegador. Wi-Fi es la
+opción más compatible entre dispositivos; Web Bluetooth depende del navegador
+y del sistema operativo. Si la PWA está publicada con HTTPS, el navegador
+puede bloquear una conexión `http://` al guante por contenido mixto. En ese
+caso usa HTTPS también en el dispositivo o sirve la PWA localmente por HTTP.
 
 ## Comandos de calidad
 
@@ -83,23 +91,40 @@ No necesitas subir el código fuente a Neon ni contratar otro hosting para la
 PWA: GitHub almacena el código, Neon almacena PostgreSQL y Render ejecuta la
 API y publica el frontend. Un dominio propio es opcional.
 
-## Protocolo BLE
+## Protocolo de conexión
 
-Los UUID, tamaños, opcodes y flags están centralizados en
-[`src/ble/gattSpec.ts`](src/ble/gattSpec.ts). El parseo binario está en
-[`src/ble/parsers.ts`](src/ble/parsers.ts) y usa little-endian. La aplicación
-envía heartbeat cada 500 ms durante una sesión, limita la asistencia a 0–100,
-muestra el paro de emergencia en la pantalla de sesión y no inicia sin el flag
-de calibración.
+La PWA conserva dos transportes para el mismo contrato de comandos y
+telemetría: Web Bluetooth (`src/ble/webBluetoothClient.ts`) y Wi-Fi con HTTP
+para salud más WebSocket para tiempo real (`src/wifi/wifiClient.ts`). La
+aplicación envía heartbeat cada 500 ms durante una sesión, limita la asistencia
+a 0–100, muestra el paro de emergencia y no inicia sin el flag de calibración.
+
+## Firmware de banco
+
+La implementacion inicial de los tres nodos ESP32 esta en [`firmware/`](firmware/).
+Incluye la lógica portable, sketches para A/B/C, persistencia NVS de
+calibración, consola de banco, pruebas host y clientes BLE/Wi-Fi. La fase 1 no
+implementa terapia ni movimiento por BLE/Wi-Fi.
+
+## Configuración Wi-Fi del firmware
+
+En [`firmware/nodeB/pins.h`](firmware/nodeB/pins.h), deja `GUANTE_WIFI_SSID`
+vacío para que el Nodo B cree el punto de acceso `Guante-Rehab`. Conecta el
+celular o tableta a esa red y usa `http://192.168.4.1` en la PWA. Para integrar
+el guante a la red existente, define `GUANTE_WIFI_SSID` y
+`GUANTE_WIFI_PASSWORD`; luego usa la IP que muestre el monitor serial.
+
+El firmware mantiene BLE disponible al mismo tiempo. El modo de conexión se
+elige desde la pantalla **Conectar**.
 
 ## Pendientes con firmware
 
-- Confirmar qué nodo expone BLE al celular.
+- Confirmar SSID, contraseña, IP y canal Wi-Fi definitivos del Nodo B.
 - Sustituir los UUID marcadores por los UUID definitivos si el firmware usa
   otros valores; el cambio debe hacerse únicamente en `gattSpec.ts`.
 - Confirmar las frecuencias reales de notificación y los códigos de estado.
 - Confirmar el comportamiento exacto del firmware cuando pierde heartbeat o
-  la conexión BLE.
+  cualquiera de las conexiones BLE/Wi-Fi.
 - Probar el servicio real con nRF Connect antes de una prueba clínica.
 
 La aplicación nunca debe considerarse la única protección de seguridad: el

@@ -211,6 +211,43 @@ button {
   justify-content: space-between;
 }
 
+.connection-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.connection-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.radio-row {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.radio-row input {
+  accent-color: #0f766e;
+}
+
+.connection-card input[type='text'] {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.7rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.7rem;
+  width: 100%;
+}
+
+.connection-card code {
+  background: #f1f5f9;
+  border-radius: 0.35rem;
+  padding: 0.1rem 0.25rem;
+}
+
 .switch-row {
   gap: 0.75rem;
   margin-left: 1rem;
@@ -629,7 +666,8 @@ button {
 }
 
 :root[data-theme='dark'] .secondary-button,
-:root[data-theme='dark'] .control-row select {
+:root[data-theme='dark'] .control-row select,
+:root[data-theme='dark'] .connection-card input[type='text'] {
   background: #1e293b;
   border-color: #475569;
   color: #e2e8f0;

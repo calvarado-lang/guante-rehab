@@ -13,21 +13,6 @@ const navigation = [
   { to: '/historial', label: 'Historial', end: false },
 ]
 
-function BluetoothNotice() {
-  const isSupported = isWebBluetoothAvailable()
-
-  if (isSupported) {
-    return null
-  }
-
-  return (
-    <div className="compatibility-notice" role="alert">
-      <strong>Web Bluetooth no está disponible.</strong> Usa Chrome o Edge en
-      Android, Windows, macOS o Linux. La conexión requiere HTTPS o localhost.
-    </div>
-  )
-}
-
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const storedTheme = globalThis.localStorage?.getItem('guante-rehab-theme')
@@ -57,7 +42,12 @@ function App() {
           </button>
       </header>
 
-      <BluetoothNotice />
+      {!isWebBluetoothAvailable() && (
+        <div className="compatibility-notice" role="status">
+          Web Bluetooth no está disponible en este navegador. La conexión por
+          Wi-Fi sigue disponible; para Bluetooth usa Chrome o Edge compatible.
+        </div>
+      )}
 
       <main className="page-container">
         <Routes>
